@@ -1,0 +1,24 @@
+version: 1.0.{build}
+
+environment:
+  TOKEN:
+    secure: hIJKQ1Spg7Z+jgBznNcdpXtxyTRWBAFQGAukgMK7rtPQQtNTLXJNKFbKnZH8g33A
+
+platform:
+  - x64
+  
+build_script:
+  - ps: >-
+      ./trendmicro-dsa.ps1;
+      choco pack output/trendmicro-dsa.nuspec
+
+test_script:
+  - ps: cinst trendmicro-dsa -fdvy -source "$pwd;http://chocolatey.org/api/v2/"
+  - ps: cuninst -fdvy trendmicro-dsa
+  - ps: cinst trendmicro-dsa -fdvy --x86 -source "$pwd;http://chocolatey.org/api/v2/"
+  - ps: cuninst -fdvy trendmicro-dsa
+deploy_script:
+  - ps: >-
+      ./deploy.ps1;
+artifacts:
+  - path: '**\*.nupkg'
