@@ -8,7 +8,7 @@ Chocolatey package for [Trend Micro Deep Security Agent](https://www.trendmicro.
 
 This package installs the Trend Micro Deep Security Agent.
 
-This Package is a template that will automatically be upgraded when a new verison is release.
+This Package is a template that will automatically be upgraded when a new version is release.
 
 
 ### Used Tech Stack
@@ -23,4 +23,3 @@ Provided Version Control
 
 [Zapier](https://zapier.com) - 
 Checks RSS Feed every 15 minutes and triggers automtic builds.
-
