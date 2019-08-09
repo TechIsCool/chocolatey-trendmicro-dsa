@@ -12,13 +12,22 @@ $Params = @{
   ProductCode = @{};
   Object = @{};
 }
-$Package     = 'trendmicro-dsa'
-$feed     = 'https://s3.amazonaws.com/ds-dlc-feed-src/en-us/DeepSecurityInventory_dlc_fp.xml'
-# $feed = 'https://s3.amazonaws.com/ds-dlc-feed-src/en-us/DeepSecurityInventory_dlc_10_0.xml'
+$Package = 'trendmicro-dsa'
+# Feed with all Packages
+$feed    = 'https://files.trendmicro.com/products/deepsecurity/en/DeepSecurityInventory_en.xml'
 
-$FeedFilter = @{
-  Platform = 'Windows';
-  Product = 'Agent';
+# Only Feature Releases changes with each version
+# $feed    = 'https://s3.amazonaws.com/ds-dlc-feed-src/en-us/DeepSecurityInventory_dlc_fp.xml'
+
+# Only 10.x Releases
+# $feed    = 'https://s3.amazonaws.com/ds-dlc-feed-src/en-us/DeepSecurityInventory_dlc_10_0.xml'
+
+# https://help.deepsecurity.trendmicro.com/software.html
+$FeedFilter = {
+  $_.platform -eq 'Windows' `
+  -and $_.product -eq 'Agent' `
+  -and $_.version.major -eq '12' `
+  -and $_.version.minor -eq '0'
   }
 
 Try{ 
@@ -31,21 +40,22 @@ Catch [System.Exception]{
 }
 
 $FilteredResults = $Results.feed.entry | `
-  Where-Object {$_.platform -eq $FeedFilter['Platform'] -and $_.product -eq $FeedFilter['Product']}
+  Where-Object $FeedFilter
 
 
 $Params['Object']['x86'] = $($FilteredResults | `
   Where-Object {$_.arch -eq 'i386'}) | `
-  Sort-Object {$_.version.major, $_.version.minor, $_.version.sp, $_.version.build} -Descending | `
+  Sort-Object {[version]$([string]::Join(".", $_.version.major, $_.version.minor, $_.version.sp, $_.version.build))} -Descending | `
   Select-Object -First 1
 
 $Params['Object']['x64'] = $($FilteredResults | `
   Where-Object {$_.arch -eq 'x86_64'}) | `
-  Sort-Object {$_.version.major, $_.version.minor, $_.version.sp, $_.version.build} -Descending | `
+  Sort-Object {[version]$([string]::Join(".", $_.version.major, $_.version.minor, $_.version.sp, $_.version.build))} -Descending | `
   Select-Object -First 1
 
-$Version = $Params['Object']['x64'] | % {"$($_.version.major).$($_.version.minor).$($_.version.sp).$($_.version.build)"}
-$ReleaseNotes = $Params['Object']['x64'].readme
+$Version = $Params['Object']['x64'] | % {[string]::Join(".", $_.version.major, $_.version.minor, $_.version.sp, $_.version.build)}
+$ReleaseNotes = "https://files.trendmicro.com/products/deepsecurity/en/" + `
+  $($Params['Object']['x64'] | Select-Object -ExpandProperty link | Where-Object {$_.rel -eq 'alternate'}).href
 
 Write-Output `
   $Package `
@@ -56,13 +66,14 @@ New-Item `
   -ItemType Directory `
   -Path `
     "$PSScriptRoot\temp", `
-    "$PSScriptRoot\output\binaries", ` 
+    "$PSScriptRoot\output\binaries", `
     "$PSScriptRoot\output\tools\" `
   -ErrorAction SilentlyContinue | Out-Null
 
 
 foreach ($OS in 'x86','x64') {
-  $Params['URL'][$OS] = $Params['Object'][$OS].download
+  $Params['URL'][$OS] = "https://files.trendmicro.com/products/deepsecurity/en/" + `
+    $($Params['Object'][$OS] | Select-Object -ExpandProperty link | Where-Object {$_.rel -eq 'related'}).href
   $Params['LocalZip'][$OS] = "$PSScriptRoot\temp\$($Params['Object'][$OS].pkginfo.name)"
 
   Invoke-WebRequest `
@@ -74,16 +85,19 @@ foreach ($OS in 'x86','x64') {
     -Path $Params['LocalZip'][$OS] `
     -Algorithm $Params['Algorithm']
 
+  <# 
+  # The new XML does not have Checksums
   if($($Params['ZipHash'][$OS].Hash) -ne $Params['Object'][$OS].pkginfo.sha256){ 
     Write-Error "Checksum does not Match for $($Params['URL'][$OS])"
   }
-  
+  #>
+
   $zip = [IO.Compression.ZipFile]::OpenRead($Params['LocalZip'][$OS])
   $zip.Entries | `
-    Where {
+    Where-Object {
       $_.Name -like '*.msi'
     } | `
-    foreach {
+    ForEach-Object {
       [System.IO.Compression.ZipFileExtensions]::ExtractToFile($_, "$PSScriptRoot\output\binaries\$($_.Name)", $true)
       $Params['LocalFile'][$OS] =  "$PSScriptRoot\output\binaries\$($_.Name)"
       $Params['FileName'][$OS] = $_.Name
