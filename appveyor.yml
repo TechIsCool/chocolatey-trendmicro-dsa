@@ -12,13 +12,14 @@ build_script:
       ./trendmicro-dsa.ps1;
       choco pack output/trendmicro-dsa.nuspec
 
-test_script:
-  - ps: cinst trendmicro-dsa -fdvy -source "$pwd;http://chocolatey.org/api/v2/"
-  - ps: cuninst -fdvy trendmicro-dsa
-  - ps: cinst trendmicro-dsa -fdvy --x86 -source "$pwd;http://chocolatey.org/api/v2/"
-  - ps: cuninst -fdvy trendmicro-dsa
-deploy_script:
-  - ps: >-
-      ./deploy.ps1;
+# test_script:
+#   - ps: cinst trendmicro-dsa -fdvy -source "$pwd;http://chocolatey.org/api/v2/"
+#   - ps: cuninst -fdvy trendmicro-dsa
+#   - ps: cinst trendmicro-dsa -fdvy --x86 -source "$pwd;http://chocolatey.org/api/v2/"
+#   - ps: cuninst -fdvy trendmicro-dsa
+# deploy_script:
+#   - ps: >-
+#       ./deploy.ps1;
+
 artifacts:
   - path: '**\*.nupkg'

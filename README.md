@@ -1,4 +1,4 @@
-# chocolatey-newrelic-dotnet
+# chocolatey-trendmicro-dsa
 
 [![Latest version released](https://img.shields.io/chocolatey/v/trendmicro-dsa.svg)](https://chocolatey.org/packages/trendmicro-dsa)
 [![Package downloads count](https://img.shields.io/chocolatey/dt/trendmicro-dsa.svg)](https://chocolatey.org/packages/trendmicro-dsa)

@@ -1,5 +1,6 @@
 ﻿Add-Type -Assembly System.IO.Compression.FileSystem
 Set-Location $PSScriptRoot
+$ProgressPreference = 'SilentlyContinue'
 
 $Params = @{
   Algorithm = 'SHA256';
